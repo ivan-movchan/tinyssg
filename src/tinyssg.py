@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-VERSION = '1.0'
+VERSION = '1.01'
 
 import os, sys, datetime
 
@@ -27,7 +27,7 @@ else:
         
         template_file_name = template_files[source_dir]
         try:
-            template_file = open(template_file_name, 'r')
+            template_file = open(template_file_name, 'r', encoding=file_encoding)
             template_text = template_file.read()
             template_file.close()
         except:
