@@ -20,16 +20,15 @@ file_encoding = 'UTF-8'
 # Source file extension.
 source_file_extension = 'md'
 
-# Overwrite existing webpages? Default value is False.
-# If some webpage was generated wrong, or the source file was modified,
-# you can remove the webpage file and run TinySSG again.
-# Existing webpages will not be overwritten.
+# Overwrite existing webpages?
 overwrite_webpages = False
 
-# Date/time string format. See https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes for details.
+# Date/time string ("{datetime}") format.
+# See https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes for details.
 datetime_format = '%Y-%m-%d %H:%M:%S UTC'
 
-# Date/time zone. See https://docs.python.org/3/library/datetime.html#datetime.datetime.astimezone for details.
+# Date/time zone.
+# See https://docs.python.org/3/library/datetime.html#datetime.datetime.astimezone for details.
 # datetime.timezone.utc = UTC, None = your local time zone.
 datetime_zone = datetime.timezone.utc
 
