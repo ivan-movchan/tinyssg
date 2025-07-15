@@ -35,5 +35,6 @@ datetime_format = '%Y-%m-%d %H:%M:%S UTC'
 text_variables = {
     'name': '{author}\'s Blog',
     'copyright': 'Copyright &copy; 2025 {author}.',
-    'author': 'John Doe'
+    'author': 'John Doe',
+    'powered_by': 'Powered by <a href="https://github.com/ivan-movchan/tinyssg" target="_blank">TinySSG</a>.'
 }
