@@ -1,96 +1,90 @@
 #!/usr/bin/python3
 
-VERSION = '1.1'
-INFO_MARKER, WARNING_MARKER, ERROR_MARKER = '(i) ', '(!) ', '(x) '
+VERSION = '1.2'
+INFO_MARKER, WARNING_MARKER, ERROR_MARKER = '(i)', '(!)', '(x)'
 
 import os, sys, datetime
 
-def die(message, code=0):
-    print(message)
+def die(prefix, message, code=0):
+    print(prefix, message, sep=('' if prefix == '' else ' '))
     exit(code)
 
 if __name__ != '__main__':
-    print(f'{INFO_MARKER}This module should not be imported.')
-else:
-    if '-v' in sys.argv or '--version' in sys.argv:
-        die(f'TinySSG {VERSION}\nCopyright (c) 2025 Ivan Movchan\nhttps://github.com/ivan-movchan/tinyssg')
+    die(WARNING_MARKER, 'This module should not be imported.')
+
+if '-v' in sys.argv or '--version' in sys.argv:
+    die('', f'TinySSG {VERSION}\nCopyright (с) 2025 Ivan Movchan\nhttps://github.com/ivan-movchan/tinyssg')
+
+try:
+    import markdown
+except:
+    print(WARNING_MARKER, 'Failed to import "markdown" module. Markdown support is not available.')
+
+try:
+    if not os.getcwd() in sys.path:
+        sys.path.insert(0, os.getcwd())
+    from config import *
+except:
+    die(ERROR_MARKER, 'Failed to import the configuration module ("config.py"). Please run the module manually to check it for errors, or create it from the template if it does not exist.', 1)
+
+for source_dir in directories:
+    if not os.path.isdir(source_dir):
+        die(ERROR_MARKER, f'"{source_dir}" does not exist or is not a directory.', 2)
     
     try:
-        from config import *
+        template_file = open(template_files[source_dir], 'r', encoding=file_encoding)
+        template_text = template_file.read()
+        template_file.close()
     except:
-        die(f'{ERROR_MARKER}Failed to import configuration module ("config.py").', 1)
+        die(ERROR_MARKER, f'Failed to read "{template_files[source_dir]}" file.', 2)
     
-    for directory in directories:
-        source_dir = directory
-        target_dir = directories[directory]
-        source_files = []
+    source_files = []
+    for root, dirs, files in os.walk(source_dir):
+        for file in files:
+            if file.endswith(f'.{source_file_extension}'):
+                new_file = root.replace(source_dir, '.').replace('\\', '/') + '/' + file.replace('\\', '/')
+                source_files.append(new_file)
+    
+    print(INFO_MARKER, f'"{source_dir}" has {len(source_files)} source file(s).')
+    
+    target_dir = directories[source_dir]
+    
+    for file in source_files:
+        source_file_name = f'{source_dir}/{file}'.replace('/./', '/')
+        target_file_name = f'{target_dir}/{file}'.replace('/./', '/').replace(f'.{source_file_extension}', '.html')
         
-        if not os.path.isdir(source_dir):
-            die(f'{ERROR_MARKER}"{source_dir}" does not exist or is not a directory.', 2)
+        if os.path.isfile(target_file_name) and not overwrite_webpages:
+            print(WARNING_MARKER, f'"{target_file_name}" already exists and will not be overwritten.')
+            continue
         
-        template_file_name = template_files[source_dir]
+        target_dirs = target_file_name[:target_file_name.rfind('/')]
         try:
-            template_file = open(template_file_name, 'r', encoding=file_encoding)
-            template_text = template_file.read()
-            template_file.close()
+            os.makedirs(target_dirs, exist_ok=True)
         except:
-            die(f'{ERROR_MARKER}Failed to read "{template_file_name}" file.', 2)
+            die(ERROR_MARKER, f'Failed to create target directories ("{target_dirs}").', 2)
         
-        if not os.path.exists(source_dir):
-            print(f'{WARNING_MARKER}"{source_dir}" does not exist.')
-        else:
-            for file in os.listdir(source_dir):
-                if file.endswith(f'.{source_file_extension}'):
-                    source_files.append(file)
-    
-        for file in source_files:
-            if not template_file_name.endswith(file):
-                source_file_name = f'{source_dir}/{file}'
-                target_file_name = f'{target_dir}/{file}'.replace(f'.{source_file_extension}', '.html')
-                
-                if os.path.isfile(target_file_name) and not overwrite_webpages:
-                    print(f'{WARNING_MARKER}"{target_file_name}" already exists, skipping...')
-                    continue
-                
-                try:
-                    os.makedirs(target_dir, exist_ok=True)
-                except:
-                    die(f'{ERROR_MARKER}Failed to create target directory ("{target_dir}").', 2)
-                
-                print(f'{INFO_MARKER}Generating "{target_file_name}" from "{source_file_name}"...')
-                
-                source_file = open(source_file_name, 'r', encoding=file_encoding)
-                source_file_content = source_file.read().split('\n')
-                source_file.close()
-                
-                if len(source_file_content) < 3:
-                    print(f'{WARNING_MARKER}"{source_file_name}" contains less than 3 lines of text. Skipping...')
-                    continue
-                
-                page_title = source_file_content[0]
-                page_text = template_text.replace('{title}', page_title)
-                
-                page_content = '\n'.join(source_file_content[2:])
-                try:
-                    import markdown
-                    page_content = markdown.markdown(page_content, output_format='html')
-                except:
-                    print(f'{WARNING_MARKER}Failed to convert text from Markdown to HTML. Is "markdown" module installed?')
-                page_text = page_text.replace('{content}', page_content)
-                
-                page_datetime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S (UTC)')
-                try:
-                    page_datetime = datetime.datetime.now().astimezone(datetime_zone).strftime(datetime_format)
-                except:
-                    print(f'{WARNING_MARKER}Failed to get date/time in "{datetime_zone}" time zone. Reverted to UTC.')
-                page_text = page_text.replace('{datetime}', page_datetime)
-                
-                for var in text_variables:
-                    page_text = page_text.replace(('{' + var + '}'), text_variables[var])
-                
-                try:
-                    target_file = open(target_file_name, 'w', encoding=file_encoding)
-                    target_file.write(page_text)
-                    target_file.close()
-                except:
-                    print(f'{ERROR_MARKER}Failed to write "{target_file_name}" file.')
+        print(INFO_MARKER, f'Generating "{target_file_name}" page.')
+        
+        source_file = open(source_file_name, 'r', encoding=file_encoding)
+        source_file_content = source_file.read().split('\n')
+        source_file.close()
+        
+        page_content = '\n'.join(source_file_content[2:])
+        try:
+            page_content = markdown.markdown(page_content, output_format='html')
+        except:
+            page_content = page_content
+        
+        page_datetime = datetime.datetime.now().astimezone(datetime_zone).strftime(datetime_format)
+        
+        page_text = template_text.replace('{content}', page_content).replace('{title}', source_file_content[0]).replace('{datetime}', page_datetime)
+        
+        for var in text_variables:
+            page_text = page_text.replace(('{' + var + '}'), text_variables[var])
+        
+        try:
+            target_file = open(target_file_name, 'w', encoding=file_encoding)
+            target_file.write(page_text)
+            target_file.close()
+        except:
+            print(ERROR_MARKER, f'Failed to write "{target_file_name}" file.')
