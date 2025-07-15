@@ -23,6 +23,8 @@ Running `tinyssg.py` with `-v` or `--version` flag will display the version of t
 
 The first line in every source file should contain the page title. The page content (Markdown-formatted text) should begin from the third line.
 
+You can build a couple of websites without having to re-configure TinySSG every time. All you need to do is copy (and then edit) `config.py` to the directory with source files of every website, and add TinySSG directory (`src`) to `PATH` environment variable or copy `tinyssg.py` module to one of directories specified in `PATH` (i. e. `/usr/local/bin` if you are working on GNU/Linux or \*BSD).
+
 In `demo` folder you can find an example of a static site that can be generated using TinySSG.
 
 > [!WARNING]
